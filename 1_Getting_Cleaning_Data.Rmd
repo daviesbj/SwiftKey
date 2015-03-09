@@ -1,0 +1,26 @@
+---
+title: "Getting and Cleaning the Data"
+author: "Brian Davies"
+date: "09 March 2015"
+output: html_document
+---
+
+# Downloading the Data
+
+Just do the obvious thing to start with.
+
+```{r download_and_unzip_data, cache = TRUE }
+sourceURL = 'https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip'
+download.file( url = sourceURL, destfile = basename( sourceURL), method = 'curl' )
+unzip('Coursera-SwiftKey.zip')
+```
+
+# Loading the Data
+
+I've got a pretty good computer, so I'm just gonna load the lot
+
+```{r load_all_the_text, cache = TRUE }
+blogsRaw <- readLines( '~/SwiftKey/final/en_US/en_US.blogs.txt' )
+newsRaw <- readLines( '~/SwiftKey/final/en_US/en_US.news.txt' )
+twitRaw <- readLines( '~/SwiftKey/final/en_US/en_US.twitter.txt' )
+```
