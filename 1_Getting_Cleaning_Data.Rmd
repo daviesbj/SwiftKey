@@ -58,15 +58,40 @@ I'm going to change it to a list of arrays of tokens
 
 ```{r change_to_token_list, cache = TRUE}
 textList <- as.list( textSample6 )
-textList <- lapply( textList, function(x) strsplit( x, ' ', fixed = TRUE ) )
+textList <- sapply( textList, function(x) strsplit( x[1], ' ', fixed = TRUE ) )
+```
+
+Some code to answer the questions in the first quiz.
+
+```{r Quiz_Questions, cache = TRUE }
+# Q1. The en_US.blogs.txt file is how many megabytes?
+file.info( 'final/en_US//en_US.blogs.txt')$size/(2**20)
+# Q2. The en_US.twitter.txt has how many lines of text?
+length( twitRaw )
+# Q3. What is the length of the longest line seen in any of the three en_US data sets?
+max(nchar(blogsRaw))
+max(nchar(newsRaw))
+max(nchar(twitRaw))
+# Q4. In the en_US twitter data set, if you divide the number of lines where the word "love" (all lowercase) occurs by the number of lines the word "hate" (all lowercase) occurs, about what do you get?
+sum( grepl( '\\blove\\b', twitRaw, perl = TRUE )) / sum( grepl( '\\bhate\\b', twitRaw, perl = TRUE ))
+# Q5. The one tweet in the en_US twitter data set that matches the word "biostats" says what?
+twitRaw[ grepl( '\\bbiostats\\b', twitRaw, perl = TRUE, ignore.case = TRUE ) ]
+# Q6. How many tweets have the exact characters "A computer once beat me at chess, but it was no match for me at kickboxing". (I.e. the line matches those characters exactly.)
+sum( twitRaw == "A computer once beat me at chess, but it was no match for me at kickboxing" )
 ```
 
 How to filter profanity? I'm going to remove every token that contains an embedded word that corresponds
 to one of my profanities. Need to experiment with this.
 
-```{r deprofanizer functiion, cache = TRUE}
+```{r deprofanizer_function, cache = TRUE}
 NoProf <- function( someWords, badWordsJoined ) someWords[ ! grepl( badWordsJoined, someWords, perl = TRUE ) ]
 NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
-        paste0( c( 'fox', 'badger' ), collapse = '|' )
-      )
+        paste0( c( 'fox', 'badger' ), collapse = '|' ))
+NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
+        paste0( c( '^fox$', 'badger' ), collapse = '|' ))
+profanities <- readLines( '~/SwiftKey/profanity.txt' )
+profPatterns <- paste0( profanities, collapse = '|' )
+textListClean <- sapply( textList, function(x) NoProf( x, profPatterns ) )
 ```
+
+That kinda-sorta seems to work, so now to do the whole bang-shoot

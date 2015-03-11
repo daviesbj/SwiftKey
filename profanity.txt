@@ -4,12 +4,13 @@ pimp
 bugger
 cunt
 crap
-dick
+^dicks?$
 piss
 bollock
 whore
 twat
 clit
+^cum$
 cumshot
 precum
 cumming
@@ -36,9 +37,10 @@ hardon
 jobbie
 jobby
 turd
+^tit$
 titty
 titties
-boob
+boobs
 strapon
 dildo
 titclamp
