@@ -5,6 +5,12 @@ date: "09 March 2015"
 output: html_document
 ---
 
+# Basic setup
+
+```{r basic_setup}
+set.seed(773230)
+```
+
 # Downloading the Data
 
 Just do the obvious thing to start with.
@@ -23,4 +29,44 @@ I've got a pretty good computer, so I'm just gonna load the lot
 blogsRaw <- readLines( '~/SwiftKey/final/en_US/en_US.blogs.txt' )
 newsRaw <- readLines( '~/SwiftKey/final/en_US/en_US.news.txt' )
 twitRaw <- readLines( '~/SwiftKey/final/en_US/en_US.twitter.txt' )
+```
+
+Resampling the data. Lets take 1% of each lot.
+
+```{r subsample_raw_data, cache = TRUE}
+textSample <- c(
+  sample( blogsRaw, size = floor( length( blogsRaw ) / 100 ), replace = FALSE ),
+  sample( newsRaw, size = floor( length( newsRaw ) / 100 ), replace = FALSE ),
+  sample( twitRaw, size = floor( length( twitRaw ) / 100 ), replace = FALSE )
+)
+textSample <- sample( textSample, size = length( textSample ), replace = FALSE )
+```
+
+And change it to words
+
+```{r change_to_words, cache = TRUE}
+textSample2 <- tolower( textSample )
+# Letters & apostrophes only
+textSample3 <- gsub( "[^abcdefghijklmnopqrstuvwxyz' ]", ' ', textSample2, perl = TRUE )
+# Manage unwanted spaces
+textSample4 <- gsub( ' +', ' ', textSample3, perl = TRUE )
+textSample5 <- gsub( '^ ', '', textSample4, perl = TRUE )
+textSample6 <- gsub( ' $', '', textSample5, perl = TRUE )
+```
+
+I'm going to change it to a list of arrays of tokens
+
+```{r change_to_token_list, cache = TRUE}
+textList <- as.list( textSample6 )
+textList <- lapply( textList, function(x) strsplit( x, ' ', fixed = TRUE ) )
+```
+
+How to filter profanity? I'm going to remove every token that contains an embedded word that corresponds
+to one of my profanities. Need to experiment with this.
+
+```{r deprofanizer functiion, cache = TRUE}
+NoProf <- function( someWords, badWordsJoined ) someWords[ ! grepl( badWordsJoined, someWords, perl = TRUE ) ]
+NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
+        paste0( c( 'fox', 'badger' ), collapse = '|' )
+      )
 ```
