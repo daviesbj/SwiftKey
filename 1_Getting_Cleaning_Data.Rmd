@@ -92,6 +92,11 @@ NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arc
 profanities <- readLines( '~/SwiftKey/profanity.txt' )
 profPatterns <- paste0( profanities, collapse = '|' )
 textListClean <- sapply( textList, function(x) NoProf( x, profPatterns ) )
+allWords <- unlist( textList )
+allWords <- allWords[ order( allWords )]
+allWordsUnique <- levels( allWords )
 ```
+
+There are other profanity strategies that I might choose to try later.
 
 That kinda-sorta seems to work, so now to do the whole bang-shoot
