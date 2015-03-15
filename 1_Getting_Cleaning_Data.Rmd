@@ -9,19 +9,22 @@ output: html_document
 
 ```{r basic_setup}
 set.seed(773230)
+profanityFile <- '~/SwiftKey/profanity.txt'
+sampleFraction = 0.05
+source( "~/SwiftKey//1_LoadingAndCleaning.R")
 ```
 
 # Downloading the Data
 
 Just do the obvious thing to start with.
 
-```{r download_and_unzip_data, cache = TRUE }
+```{r download_and_unzip_data, eval = FALSE }
 sourceURL = 'https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip'
 download.file( url = sourceURL, destfile = basename( sourceURL), method = 'curl' )
 unzip('Coursera-SwiftKey.zip')
 ```
 
-# Loading the Data
+# Loading the Data into R
 
 I've got a pretty good computer, so I'm just gonna load the lot
 
@@ -31,34 +34,139 @@ newsRaw <- readLines( '~/SwiftKey/final/en_US/en_US.news.txt' )
 twitRaw <- readLines( '~/SwiftKey/final/en_US/en_US.twitter.txt' )
 ```
 
-Resampling the data. Lets take 1% of each lot.
+# Resampling the data
+
+Resampling the data. Lets take a few % of each lot.
 
 ```{r subsample_raw_data, cache = TRUE}
 textSample <- c(
-  sample( blogsRaw, size = floor( length( blogsRaw ) / 100 ), replace = FALSE ),
-  sample( newsRaw, size = floor( length( newsRaw ) / 100 ), replace = FALSE ),
-  sample( twitRaw, size = floor( length( twitRaw ) / 100 ), replace = FALSE )
+  sample( blogsRaw, size = floor( length( blogsRaw ) * sampleFraction ), replace = FALSE ),
+  sample( newsRaw, size = floor( length( newsRaw ) * sampleFraction ), replace = FALSE ),
+  sample( twitRaw, size = floor( length( twitRaw ) * sampleFraction ), replace = FALSE )
 )
-textSample <- sample( textSample, size = length( textSample ), replace = FALSE )
+textSample00 <- sample( textSample, size = length( textSample ), replace = FALSE )
 ```
+
+# Getting rid of non-words
 
 And change it to words
 
 ```{r change_to_words, cache = TRUE}
-textSample2 <- tolower( textSample )
-# Letters & apostrophes only
-textSample3 <- gsub( "[^abcdefghijklmnopqrstuvwxyz' ]", ' ', textSample2, perl = TRUE )
-# Manage unwanted spaces
-textSample4 <- gsub( ' +', ' ', textSample3, perl = TRUE )
-textSample5 <- gsub( '^ ', '', textSample4, perl = TRUE )
-textSample6 <- gsub( ' $', '', textSample5, perl = TRUE )
+textSample01 <- tolower( textSample00 )
+# Protect possessive apostrophes
+textSample02 <- gsub( "'s\\b", "SS", textSample01, perl = TRUE )
+textSample02a <- gsub( "\\bcan't\\b", "CANT", textSample02, perl = TRUE )
+textSample02b <- gsub( "\\bi'm\\b", "IM", textSample02a, perl = TRUE )
+textSample02c <- gsub( "\\bisn't\\b", "ISNT", textSample02b, perl = TRUE )
+textSample02d <- gsub( "\\bwasn't\\b", "WASNT", textSample02c, perl = TRUE )
+textSample02e <- gsub( "\\bwon't\\b", "WONT", textSample02d, perl = TRUE )
+# Remove all other apostrophes
+textSample03 <- gsub( "'", "", textSample02e, fixed = TRUE )
+# Restore possessive apostrophes
+textSample04 <- gsub( "SS", "'s", textSample03, fixed = TRUE )
+textSample04 <- gsub( "CANT", "can't", textSample03, fixed = TRUE )
+textSample04 <- gsub( "IM", "i'm", textSample03, fixed = TRUE )
+textSample04 <- gsub( "ISNT", "isn't", textSample03, fixed = TRUE )
+textSample04 <- gsub( "WASNT", "wasn't", textSample03, fixed = TRUE )
+textSample04 <- gsub( "WONT", "won't", textSample03, fixed = TRUE )
+# Remove all other characters
+textSample05 <- gsub( "[^abcdefghijklmnopqrstuvwxyz' ]", " ", textSample04, perl = TRUE )
+textSample05a <- gsub( "^'s\\b", " ", textSample05, perl = TRUE ) # By itself for some reason
+textSample05b <- gsub( "\\s's\\b", " ", textSample05a, perl = TRUE ) # By itself for some reason
+# Collapse multiple spaces
+textSample06 <- gsub( "\\s+", " ", textSample05b, perl = TRUE )
+# Remove leading and trailing spaces
+textSample07 <- gsub( "^ ", "", textSample06, perl = TRUE )
+textSample08 <- gsub( " $", "", textSample07, perl = TRUE )
 ```
 
 I'm going to change it to a list of arrays of tokens
 
 ```{r change_to_token_list, cache = TRUE}
-textList <- as.list( textSample6 )
+textList <- as.list( textSample08 )
 textList <- sapply( textList, function(x) strsplit( x[1], ' ', fixed = TRUE ) )
+```
+
+# Profanity Filtering
+
+How to filter profanity? I'm going to remove every token that contains an embedded word that corresponds
+to one of my profanities. Need to experiment with this.
+
+I'm storing my profanities in a file the I'm calling `r profanityFile` referenced
+at the top of this document so don't look there unless you want
+to get some insight into my mind that you might not like. I've had to be a bit clever
+to get it to accept words like saturday.
+
+```{r deprofanizer_function, cache = TRUE}
+NoProf <- function( someWords, badWordsJoined ){
+  gsub( badWordsJoined, 'PROFANITY', someWords )
+}
+NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
+        paste0( c( 'fox', 'badger' ), collapse = '|' ))
+NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
+        paste0( c( '^fox$', 'badger' ), collapse = '|' ))
+profanities <- readLines( '~/SwiftKey/profanity.txt' )
+profPatterns <- paste0( profanities, collapse = '|' )
+textListClean <- sapply( textList, function(x) NoProf( x, profPatterns ) )
+allWords <- unlist( textList )
+allWordsFact <- factor( allWords[ order( allWords )] )
+allWordsUnique <- levels( allWordsFact )
+cleanWords <- unlist( textListClean )
+cleanWordsFact <- factor( cleanWords[ order( cleanWords )] )
+cleanWordsUnique <- levels( cleanWordsFact )
+rejectWords <- allWordsUnique[ ! ( allWordsUnique %in% cleanWordsUnique ) ]
+head( rejectWords )
+```
+
+# Expanding to sentences
+
+What if I want each token array to be a sentence, not an entire message?
+
+```{r split_into_sentences, cache = TRUE}
+sentenceText <- c(
+  "This is a sentence. So is this. Here is another.",
+  "This is just one long string of text",
+  "A sentence here. And another one."
+  )
+sList = as.list( sentenceText )
+sList <- sapply( sList, function(x) strsplit( x[1], '.', fixed = TRUE) )
+unlist( sList )
+```
+
+I've implemented that as the function ToSentenceArray
+
+# Main processing
+
+That kinda-sorta seems to work, so now to do the whole bang-shoot.
+I'm going to write a function that takes a file as input and outputs
+a list of arrays as output. Also created a version of NoProf that
+keeps things a bit tidier.
+
+```{r clean_and_save_loaded_datasets, cache = TRUE }
+# Blogs
+blogsSentences <- ToSentenceArray( blogsRaw )
+blogsList <- CleanSentenceArray( blogsSentences )
+blogsListClean <- NoProfWithPatterns( blogsList )
+save( blogsListClean, file = "blogsListClean.Rdata" )
+# News
+newsSentences <- ToSentenceArray( newsRaw )
+newsList <- CleanSentenceArray( newsSentences )
+newsListClean <- NoProfWithPatterns( newsList )
+save( newsListClean, file = "newsListClean.Rdata" )
+# Twitter. (Not splitting into sentences)
+twitList <- CleanSentenceArray( twitRaw )
+twitListClean <- NoProfWithPatterns( twitList )
+save( twitListClean, file = "twitListClean.Rdata" )
+# Sample for next week
+textSample <- c(
+  sample( blogsSentences, size = floor( length( blogsSentences ) * sampleFraction ), replace = FALSE ),
+  sample( newsSentences, size = floor( length( newsSentences ) * sampleFraction ), replace = FALSE ),
+  sample( twitRaw, size = floor( length( twitRaw ) * sampleFraction ), replace = FALSE )
+)
+textSample <- sample( textSample, size = length( textSample ), replace = FALSE )
+sampleList <- CleanSentenceArray( textSample )
+sampleListClean <- NoProfWithPatterns( sampleList )
+save( sampleListClean, file = 'sampleListClean.Rdata' )
 ```
 
 Some code to answer the questions in the first quiz.
@@ -80,23 +188,3 @@ twitRaw[ grepl( '\\bbiostats\\b', twitRaw, perl = TRUE, ignore.case = TRUE ) ]
 sum( twitRaw == "A computer once beat me at chess, but it was no match for me at kickboxing" )
 ```
 
-How to filter profanity? I'm going to remove every token that contains an embedded word that corresponds
-to one of my profanities. Need to experiment with this.
-
-```{r deprofanizer_function, cache = TRUE}
-NoProf <- function( someWords, badWordsJoined ) someWords[ ! grepl( badWordsJoined, someWords, perl = TRUE ) ]
-NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
-        paste0( c( 'fox', 'badger' ), collapse = '|' ))
-NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
-        paste0( c( '^fox$', 'badger' ), collapse = '|' ))
-profanities <- readLines( '~/SwiftKey/profanity.txt' )
-profPatterns <- paste0( profanities, collapse = '|' )
-textListClean <- sapply( textList, function(x) NoProf( x, profPatterns ) )
-allWords <- unlist( textList )
-allWords <- allWords[ order( allWords )]
-allWordsUnique <- levels( allWords )
-```
-
-There are other profanity strategies that I might choose to try later.
-
-That kinda-sorta seems to work, so now to do the whole bang-shoot

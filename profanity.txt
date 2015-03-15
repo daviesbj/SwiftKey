@@ -3,7 +3,7 @@ fuck
 pimp
 bugger
 cunt
-crap
+[^s]crap
 ^dicks?$
 piss
 bollock
@@ -13,7 +13,8 @@ clit
 ^cum$
 cumshot
 precum
-cumming
+cumming[^s]
+^semen$
 comeshot
 bukakke
 asshole
@@ -33,10 +34,10 @@ handjob
 bbw
 fucktoy
 fleshbot
-hardon
+^hardon
 jobbie
 jobby
-turd
+turd[^a][^y]
 ^tit$
 titty
 titties
@@ -48,3 +49,5 @@ nigger
 kike
 jewboy
 chinky
+vagina
+titfuck
