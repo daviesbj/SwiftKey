@@ -1,0 +1,22 @@
+---
+title: "Untitled"
+author: "Brian Davies"
+date: "30 March 2015"
+output: html_document
+---
+
+This is some text
+
+One blank line
+
+
+
+
+
+
+
+
+
+
+
+Lots of blank lines
