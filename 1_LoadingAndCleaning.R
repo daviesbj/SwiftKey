@@ -12,7 +12,7 @@ ToSentenceArray <- function( inText ){
   ))
 }
 
-CleanSentenceArray <- function( workArray, verbose = TRUE ){
+CleanSentenceArray <- function( workArray, verbose = TRUE, cleanProfanity = TRUE ){
 
   if( verbose ) message(" ... lowercasing" )
   workArray <- tolower( workArray )
@@ -34,7 +34,7 @@ CleanSentenceArray <- function( workArray, verbose = TRUE ){
 
   # Remove all other characters
   if( verbose ) message(" ... removing other characters" )
-  workArray <- gsub( "[^abcdefghijklmnopqrstuvwxyz' ]", " ", workArray, perl = TRUE )
+  workArray <- gsub( "[^abcdefghijklmnopqrstuvwxyz0123456789' ]", " ", workArray, perl = TRUE )
 
   if( verbose ) message(" ... removing isolated possessives" )
   workArray <- gsub( "^'s\\b|\\s's\\b", " ", workArray, perl = TRUE ) # By itself for some reason
@@ -55,9 +55,24 @@ CleanSentenceArray <- function( workArray, verbose = TRUE ){
   if( verbose ) message(" ... removing very short sentences" )
   textList[ sapply( textList, function(x){ length(x) < 2 } )] <- NULL
 
+  if( verbose ) message(" ... flagging profanities" )
+  if( cleanProfanity ) textList <- sapply( textList, function(x) NoProfWithPatterns( x ) )
+
+  if( verbose ) message(" ... identifying some non-words" )
+  textList <- sapply( textList, function(x) gsub( '^.*(.)\\1\\1.*$', 'NONWORD', x, perl = TRUE ) )
+  textList <- sapply( textList, function(x) gsub( '^.*([hjkquwxy])\\1.*$', 'NONWORD', x, perl = TRUE ) )
+  textList <- sapply( textList, function(x) gsub( '^.*x[^aeioy].*$', 'NONWORD', x, perl = TRUE ) )
+  textList <- sapply( textList, function(x) gsub( '^[bcdefghjklmnopqrstuvwxyz]$', 'LETTER', x, perl = TRUE ) )
+  textList <- sapply( textList, function(x) gsub( '^[0123456789]$', 'DIGIT', x, perl = TRUE ) )
+
+  if( verbose ) message(" ... identifying some alphanumerics" )
+  textList <- sapply( textList, function(x) gsub( '^[0123456789]+$', 'NUMBER', x, perl = TRUE ) )
+  textList <- sapply( textList, function(x) gsub( '^[abcdefghijklmnopqrstuvwxyz]+[0123456789].*$', 'ALPHANUM', x, perl = TRUE ) )
+  textList <- sapply( textList, function(x) gsub( '^[0123456789]+[abcdefghijklmnopqrstuvwxyz].*$', 'ALPHANUM', x, perl = TRUE ) )
 textList
 }
 
 NoProfWithPatterns <- function( someWords ){
-  gsub( profanityPatterns, 'PROFANITY', someWords )
+  someWords[ grepl( profanityPatterns, someWords ) ] <- 'PROFANITY'
+someWords
 }

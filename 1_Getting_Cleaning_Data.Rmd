@@ -38,13 +38,13 @@ twitRaw <- readLines( '~/SwiftKey/final/en_US/en_US.twitter.txt' )
 
 Resampling the data. Lets take a few % of each lot.
 
-```{r subsample_raw_data, cache = TRUE}
-textSample <- c(
+```{r subsample_raw_data }
+textSample0 <- c(
   sample( blogsRaw, size = floor( length( blogsRaw ) * sampleFraction ), replace = FALSE ),
   sample( newsRaw, size = floor( length( newsRaw ) * sampleFraction ), replace = FALSE ),
   sample( twitRaw, size = floor( length( twitRaw ) * sampleFraction ), replace = FALSE )
 )
-textSample00 <- sample( textSample, size = length( textSample ), replace = FALSE )
+textSample00 <- sample( textSample0, size = length( textSample0 ), replace = FALSE )
 ```
 
 # Getting rid of non-words
@@ -73,7 +73,7 @@ textSample04 <- gsub( "WONT", "won't", textSample03, fixed = TRUE )
 textSample05 <- gsub( "[^abcdefghijklmnopqrstuvwxyz' ]", " ", textSample04, perl = TRUE )
 textSample05a <- gsub( "^'s\\b", " ", textSample05, perl = TRUE ) # By itself for some reason
 textSample05b <- gsub( "\\s's\\b", " ", textSample05a, perl = TRUE ) # By itself for some reason
-# Collapse multiple spaces
+# Collapse multiple spaces into one
 textSample06 <- gsub( "\\s+", " ", textSample05b, perl = TRUE )
 # Remove leading and trailing spaces
 textSample07 <- gsub( "^ ", "", textSample06, perl = TRUE )
@@ -84,7 +84,7 @@ I'm going to change it to a list of arrays of tokens
 
 ```{r change_to_token_list, cache = TRUE}
 textList <- as.list( textSample08 )
-textList <- sapply( textList, function(x) strsplit( x[1], ' ', fixed = TRUE ) )
+textList <- sapply( textList, function( x ) strsplit( x[1], ' ', fixed = TRUE ) )
 ```
 
 # Profanity Filtering
@@ -97,22 +97,13 @@ at the top of this document so don't look there unless you want
 to get some insight into my mind that you might not like. I've had to be a bit clever
 to get it to accept words like saturday.
 
-```{r deprofanizer_function, cache = TRUE}
-NoProf <- function( someWords, badWordsJoined ){
-  gsub( badWordsJoined, 'PROFANITY', someWords )
-}
-NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
-        paste0( c( 'fox', 'badger' ), collapse = '|' ))
-NoProf( c( 'apple', 'fox', 'pear', 'badgering', 'stoats', 'cherry', 'foxy', 'arcticfox' ),
-        paste0( c( '^fox$', 'badger' ), collapse = '|' ))
-profanities <- readLines( '~/SwiftKey/profanity.txt' )
-profPatterns <- paste0( profanities, collapse = '|' )
-textListClean <- sapply( textList, function(x) NoProf( x, profPatterns ) )
+```{r deprofanizer_function_demo, cache = TRUE}
+textListClean <- sapply( textList, function(x) NoProfWithPatterns( x ) )
 allWords <- unlist( textList )
-allWordsFact <- factor( allWords[ order( allWords )] )
+allWordsFact <- factor( allWords[ order( allWords ) ])
 allWordsUnique <- levels( allWordsFact )
 cleanWords <- unlist( textListClean )
-cleanWordsFact <- factor( cleanWords[ order( cleanWords )] )
+cleanWordsFact <- factor( cleanWords[ order( cleanWords ) ])
 cleanWordsUnique <- levels( cleanWordsFact )
 rejectWords <- allWordsUnique[ ! ( allWordsUnique %in% cleanWordsUnique ) ]
 head( rejectWords )
@@ -145,18 +136,18 @@ keeps things a bit tidier.
 ```{r clean_and_save_loaded_datasets, cache = TRUE }
 # Blogs
 blogsSentences <- ToSentenceArray( blogsRaw )
-blogsList <- CleanSentenceArray( blogsSentences )
-blogsListClean <- NoProfWithPatterns( blogsList )
+blogsListClean <- CleanSentenceArray( blogsSentences )
 save( blogsListClean, file = "blogsListClean.Rdata" )
 # News
 newsSentences <- ToSentenceArray( newsRaw )
-newsList <- CleanSentenceArray( newsSentences )
-newsListClean <- NoProfWithPatterns( newsList )
+newsListClean <- CleanSentenceArray( newsSentences )
 save( newsListClean, file = "newsListClean.Rdata" )
 # Twitter. (Not splitting into sentences)
 twitList <- CleanSentenceArray( twitRaw )
-twitListClean <- NoProfWithPatterns( twitList )
-save( twitListClean, file = "twitListClean.Rdata" )
+save( twitList, file = "twitList.Rdata" )
+```
+
+```{r sample_with_more_cleanup, cache = TRUE}
 # Sample for next week
 textSample <- c(
   sample( blogsSentences, size = floor( length( blogsSentences ) * sampleFraction ), replace = FALSE ),
@@ -164,8 +155,8 @@ textSample <- c(
   sample( twitRaw, size = floor( length( twitRaw ) * sampleFraction ), replace = FALSE )
 )
 textSample <- sample( textSample, size = length( textSample ), replace = FALSE )
-sampleList <- CleanSentenceArray( textSample )
-sampleListClean <- NoProfWithPatterns( sampleList )
+sampleArray <- ToSentenceArray( textSample )
+sampleListClean <- CleanSentenceArray( sampleArray )
 save( sampleListClean, file = 'sampleListClean.Rdata' )
 ```
 

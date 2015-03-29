@@ -1,0 +1,99 @@
+---
+title: "Exploratory Analysis of the Data"
+author: "Brian Davies"
+date: "16 March 2015"
+output: html_document
+---
+
+# Basic Setup
+
+```{r basic_setup}
+set.seed(773230)
+source( "~/SwiftKey/2_ExploratoryAnalysis.R")
+library(hash)
+```
+
+# Loading Sample Dataset
+
+```{r load_data, cache = TRUE }
+load( 'sampleListClean.Rdata' )
+```
+
+# Word Frequency
+
+```{r unigram_frequencies, cache = TRUE}
+wordVec <- unlist( sampleListClean )
+wordFreq <- table( wordVec )
+wordFreq <- wordFreq[ order( wordFreq, decreasing = TRUE )]
+head( wordFreq, 20 )
+wordRunTotal <- cumsum( wordFreq )
+head( wordRunTotal, 20 )
+hapaxVec <- names( wordFreq[ wordFreq == 1 ] )
+nonHapaxVec <- names( wordFreq[ wordFreq > 1 ] )
+```
+
+# Hapax flagging
+
+A __hapax legomenon__ is a word that appears only once in a given corpus.
+
+```{r flag_hapax, cache = TRUE }
+sampleListHapax <- sapply( sampleListClean,
+                           function(x){ ReplaceHapaxInv( x, nonHapaxVec )} )
+save( sampleListHapax, file = "sampleListHapax.Rdata" )
+```
+
+# Bigrams and Trigrams
+
+Here we count the sentences as being bracketed with BEGIN and END. How to
+build the frequency table?
+
+Answer: I go through the source text one bigram or trigram
+at a time, counting the frequency of each. This takes AGES and I probably
+need to do some tuning, but Ihere's basically what I ran.
+
+__TODO__: Investigate whether __table()__ does it faster/better. i.e. just enumerate
+a great big list of ngrams and then count 'em.
+
+```{r get_ngram_lists, eval = FALSE }
+wordListHapax <- unlist( sampleListHapax )
+uniGramList <- table( wordListHapax )
+save( uniGramList, file = "uniGramList.Rdata" )
+biGramList <- TabulateBigrams( sampleListHapax )
+save( biGramList, file = "biGramList.Rdata")
+triGramList <- TabulateTrigrams( sampleListHapax )
+save( triGramList, file = "triGramList.Rdata")
+```
+
+That actually took __HOURS__, so instead I'm going to just reload the saved datasets.
+
+```{r reload_ngram_lists, cache = TRUE}
+load( "uniGramList.Rdata" )
+load( "biGramList.Rdata" )
+load( "triGramList.Rdata" )
+```
+
+# Frequency and meta-frequency Analysis
+
+The lists of unigrams, bigrams and trigrams are already labelled with frequency.
+Want to sort them all into order of decreasing frequency.
+
+Easy to do for unigrams:
+
+```{r sort_unigrams_descending, cache = TRUE}
+unigramsSorted <- uniGramList[ order( uniGramList, decreasing = TRUE )]
+head( unigramsSorted, 20 )
+```
+
+Needs some coding for bigrams and trigrams because they're hashes.
+
+```{r analyze_bigrams, cache = TRUE}
+biGramFrame <- data.frame(
+  bigram = keys( biGramList ),
+  frequency = values( biGramList )
+  )
+biGramFrameOrder <- order( biGramFrame$frequency, decreasing = TRUE )
+biGramFrame$bigram <- biGramFrame$bigram[biGramFrameOrder]
+biGramFrame$frequency <- biGramFrame$frequency[biGramFrameOrder]
+head( biGramFrame, 20 )
+save( biGramFrame, file = "biGramFrame.Rdata" )
+```

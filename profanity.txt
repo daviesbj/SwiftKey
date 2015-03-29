@@ -8,7 +8,7 @@ cunt
 piss
 bollock
 whore
-twat
+^twat
 clit
 ^cum$
 cumshot

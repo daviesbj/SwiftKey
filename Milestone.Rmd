@@ -1,0 +1,186 @@
+---
+title: "Data Science Capstone Milestone Report"
+author: "Brian Davies"
+date: "29 March 2015"
+output: html_document
+---
+
+```{r basic_setup, echo = FALSE}
+source('~/SwiftKey/1_LoadingAndCleaning.R')
+```
+
+# Executive Summary
+
+This report demonstrates my progress so far on a project to develop a text-prediction module for
+incorporation into other text-based software applications. The contents of the
+report are as follows:
+
+1. My interpretation of the project goals and how I propose to fulfill them
+2. Description of the dataset available to develop the text-prediction module
+3. Some steps I took to clean up the data, its overall scale, and how I sampled
+it for development purposes
+4. Some statistical properties of the sample that I have discovered so far
+5. Next steps in the project
+
+__NOTE:__ I interpreted the requirement _...written in a brief, concise style, in
+a way that a non-data scientist manager could appreciate_ in the rubric as meaning
+that the published version of this  report should __not__ contain R source code.
+
+# Project Goals
+
+The deliverable of this project is the development of an assistive text-prediction
+module that can be built into a larger software product. The module will scan a stream
+of text being typed by the user, and suggest single or multiple possibilities for the next
+word to be appended to the input stream
+depending on the last few words. Note that it will work at the level of
+__words__ not __characters__ -- it isn't intended to suggest __word__-completions from
+the first few __letters__.
+
+The correct operation of the module will be demonstrated by wrapping it in a Shiny app
+so anyone with a Web browser can try typing in their own text stream to see what happens.
+The user will have the option to accept or reject the module's suggestions.
+
+# Proposed approach and special technical terms
+
+The module will work by analyzing sequences of __tokens__ in the user's text stream. A __token__
+is a minimal unit of text such as a word, anme or number, or something special
+like the start or end of a sentence. The modules will use tables of
+the most common short __ngrams__ in the target language, based on statistical
+analysis of the SwiftKey dataset. 
+The word _ngram_ is another term of art in language processing; it is a short sequence of adjacent
+words or other key elements in a text stream. For example, the sentence _I want candy_ contains:
+
+* Unigrams: __i__, __want__, __candy__
+* Bigrams: __START i__, __i want__, __want candy__, __candy END__
+* Trigrams: __START i want__, __i want candy__, __want candy END__
+
+Note that the start and end of the sentence have also been tokenized as special tokens.
+
+So if your text stream contains the tokens __i want__ you can predict the next word
+by looking at all trigrams beginning with those teo tokens, and choosing the most common
+third token or word
+
+# Dataset Acquisition, description and processing pipeline
+
+1. The three English datasets provided by SwiftKey were downloaded from the Internet
+2. Loaded into the R environment
+3. News and Blog data were split into sentences (tweets treated as single sentences)
+4. Single-word sentences removed
+4. Remaining sentences converted into tokens, lowercase
+5. Profanities replaced with the token __PROFANITY__
+6. Numbers and alphanumerics replaced with __DIGIT__ or __NUMBER__ or __ALPHANUMERIC__
+7. Single characters other than __a__ and __i__ replaced with __LETTER__
+8. Obvious nowords (e.g. containing three consecutive identical letters) replaced with __NONWORD__
+
+Note that the source text was all converted to __lowercase__, whereas special tokens
+are in __UPPERCASE__ for ease of recognition.
+
+```{r load_all_the_text, cache = TRUE, message = FALSE, warning = FALSE, echo = FALSE }
+blogsRaw <- readLines( '~/SwiftKey/final/en_US/en_US.blogs.txt' )
+newsRaw <- readLines( '~/SwiftKey/final/en_US/en_US.news.txt' )
+twitRaw <- readLines( '~/SwiftKey/final/en_US/en_US.twitter.txt' )
+blogsSentences <- ToSentenceArray( blogsRaw )
+newsSentences <- ToSentenceArray( newsRaw )
+load( 'blogsListClean.Rdata' )
+load( 'newsListClean.Rdata' )
+load( 'twitListClean.Rdata' )
+blogsWords <- unlist( blogsListClean )
+newsWords <- unlist( newsListClean )
+twitWords <- unlist( twitListClean )
+```
+
+The following table gives the size of the dataset:
+
+File              | Lines                 | Sentences                   | Tokens
+------------------|-----------------------|-----------------------------|--------------------
+en_US.blogs.txt   | `r length( blogsRaw)` | `r length( blogsSentences)` | `r length( blogsWords)`
+en_US.new.txt     | `r length( newsRaw)`  | `r length( newsSentences)`  | `r length( newsWords)`
+en_US.twitter.txt | `r length( twitRaw )` | `r length( twitRaw )`       | `r length( twitWords)`
+
+Note that I am considering each tweet as a single sentence, so the respective numbers
+of lines and sentences are equal.
+
+## Working with a subset of the data
+
+To save time during algorithm development, a random sample of the dataset was
+selected; five percent each of _sentences_ from __blogs__ and __news__, and five
+percent of the tweets. This seems reasonable because the three datasets contain approximately
+the same number of sentences and tokens. __The rest of this report concerns the
+statistical properties of the subset, not the entire dataset.__
+
+```{r load_subset, cache = TRUE, echo = FALSE}
+load( 'sampleListClean.Rdata' )
+sampleWords <- unlist( sampleListClean )
+nSamp <- length( sampleWords )
+```
+
+The sample contains `r length( sampleListClean )` sentences and
+`r nSamp` tokens, including the special
+tokens such as __NONWORD__ and __ALPHANUMERIC__ mentioned above.
+
+# Word frequency analysis
+
+The frequency distribution of single tokens in the sample looks like the following. Note that
+both axes are logarithmic.
+
+```{r word_frequency_analysis, cache = TRUE, echo = FALSE}
+wordVec <- unlist( sampleListClean )
+wordFreq <- table( wordVec )
+wordFreq <- wordFreq[ order( wordFreq, decreasing = TRUE )]
+wordRunTotal <- cumsum( wordFreq )
+nWord <- length( wordFreq )
+metaWordFreq <- table( wordFreq )
+```
+
+Here are the 20 commonest words:
+
+```{r commonest words, cache = TRUE, echo = FALSE}
+head( wordFreq, 20)
+```
+
+Note that a few of these are the special tokens mentioned above.  The following
+plot gives the distribution of word frequencies in the `r nSamp` words
+of the dataset.
+
+```{r word_distribution_plot, cache = TRUE, echo = FALSE}
+plot( 1:nWord, wordRunTotal, log = 'x', xlab = "Token Frequency Rank (log scale)", ylab = "Cumulative Number of Tokens" )
+```
+
+There are a LOT of words whose frequency is 1 -- `r metaWordFreq[1]` of them
+out of `r length(wordFreq)`, in fact, some `r 100 * metaWordFreq[1] / length(wordFreq)`%.
+These words need to be treated specially by a word guesser, so they will be replaced by the
+special token __HAPAX__ in the dataset.
+
+# N-Gram statistics
+
+```{r load ngram data, cache = TRUE, echo = FALSE}
+load( 'biGramFrame.Rdata' )
+biGramFrame$cumfreq <- cumsum( biGramFrame$frequency )
+metaBiGramFreq <- table( biGramFrame$frequency )
+nBiToPlot <- length( biGramFrame$bigram )
+```
+
+Just looking at bigrams (the extension to n-grams is trivial). Here are the twenty most common bigrams:
+
+```{r twenty_common_bigrams, cache = TRUE, echo = FALSE}
+head( biGramFrame, 20 )
+```
+
+The sample dataset
+contained `r length( biGramFrame$bigram )` different bigrams, of which `r metaBiGramFreq[1]`
+occurred only once, some `r 100 * metaBiGramFreq[1] / length( biGramFrame$bigram )`%. Here is the frequency distribution of the bigrams.
+
+```{r bigram_distribution_plot, cache = TRUE, echo = FALSE}
+plot( 1:nBiToPlot, biGramFrame$cumfreq[1:nBiToPlot],
+      log = 'x', xlab = "Bigram Frequency Rank (log scale)", ylab = "Cumulative Number of Bigrams" )
+```
+
+# Next Steps
+
+The next step is to implement an ngram-based guesser which takes a (k-1)-gram and
+tries to guess the next token based on the k-gram frequencies, with the option
+of fallback to shorter n-grams if desired. We will be using the Good-Turing Smoothing
+algorithm to deal with unique words (hapaxes, the __HAPAX__ token) and ngrams.
+
+Once the basic guesser algorithm is working, I will interface it to the Shiny app that
+will serve as the showcase for my work, and submit my final report.
