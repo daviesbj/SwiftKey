@@ -233,5 +233,7 @@ NgramFrame <- function( sentenceList,
   ngramFrame$freq <- freq
   rm( freq )
 
+  colnames( ngramFrame ) <- gsub( "^X", "token", colnames( ngramFrame ), perl = TRUE )
+
 ngramFrame
 }
