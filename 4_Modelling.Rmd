@@ -1,0 +1,20 @@
+---
+title: "N-gram Modelling"
+author: "Brian Davies"
+date: "03 April 2015"
+output: html_document
+---
+
+```{r basic_setup}
+```
+
+```{r load_datasets, cache = TRUE}
+load( "unigramPrev.Rdata" )
+load( "bigramPrev.Rdata" )
+load( "trigramPrev.Rdata" )
+```
+
+# Rearranging Ngram databases
+
+I've rearranged my ngram databases so they look like this:
+

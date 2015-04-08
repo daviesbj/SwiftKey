@@ -1,61 +1,5 @@
-TabulateBigrams <- function( sentenceList,
-                             firstOne = 1,
-                             howMany = length( sentenceList ) - firstOne + 1,
-                             verbose = TRUE ){
-  biGramList <- hash()
-  nTok = 0;
-  for ( iSentence in 1:howMany ){
-    if( ( verbose && ( iSentence %% floor( howMany / 100 ) ) == 0 )){
-      message( "Done ", iSentence, "/", howMany, " sentences -- tokens: ", nTok,
-               " biGrams: ", length( biGramList) )
-    }
-    sentence <- sentenceList[[iSentence + firstOne - 1]]
-    nTok <- nTok + length( sentence )
-    twoWords <- c( NA, 'START' )
-    innerList <- list()
-    nBigram <- 0
-    for( nextWord in c( sentence, 'END' ) ){
-      nBigram <- nBigram + 1
-      twoWords <- c( twoWords[2], nextWord )
-      biGram <- paste( twoWords, collapse = ':' )
-      if( is.null( biGramList[[biGram]])){
-        biGramList[[biGram]] <- 1
-      } else {
-        biGramList[[biGram]] <- biGramList[[biGram]] + 1
-      }
-    }
-  }
-biGramList
-}
+library( plyr )
 
-TabulateTrigrams <- function( sentenceList,
-                             firstOne = 1,
-                             howMany = length( sentenceList ) - firstOne + 1,
-                             verbose = TRUE ){
-  triGramList <- hash()
-  nTok = 0;
-  for ( iSentence in 1:howMany ){
-    if( ( verbose && ( iSentence %% floor( howMany / 100 ) ) == 0 )){
-      message( "Done ", iSentence, "/", howMany, " sentences -- tokens: ", nTok,
-               " triGrams: ", length( triGramList) )
-    }
-    sentence <- sentenceList[[iSentence + firstOne - 1]]
-    nTok <- nTok + length( sentence )
-    threeWords <- c( NA, 'START', sentence[1] )
-    xSentence <- sentence[2:length( sentence)]
-    innerList <- list()
-    for( nextWord in c( xSentence, 'END' ) ){
-      threeWords <- c( threeWords[2:3], nextWord )
-      triGram <- paste( threeWords, collapse = ':' )
-      if( is.null( triGramList[[triGram]])){
-        triGramList[[triGram]] <- 1
-      } else {
-        triGramList[[triGram]] <- triGramList[[triGram]] + 1
-      }
-    }
-  }
-triGramList
-}
 
 ReplaceHapax <- function( wordVec, hapaxVec, newToken = 'HAPAX' ){
   wordVec[ wordVec %in% hapaxVec ] <- newToken
@@ -65,114 +9,6 @@ wordVec
 ReplaceHapaxInv <- function( wordVec, nonHapaxVec, newToken = 'HAPAX' ){
   wordVec[ ! ( wordVec %in% nonHapaxVec ) ] <- newToken
   wordVec
-}
-
-BigramTable <- function( sentenceList,
-                         firstOne = 1,
-                         howMany = length( sentenceList ) - firstOne + 1,
-                         verbose = TRUE ){
-
-  bigramVecList <- list()
-  nTok <- 0
-
-# Loop over sentences
-  for ( iSentence in 1:howMany ){
-
-    if( ( verbose && ( iSentence %% floor( howMany / 100 ) ) == 0 )){
-      message( "Sentences: ", iSentence, "/", howMany, " Tokens: ", nTok )
-    }
-
-    sentence <- sentenceList[[iSentence + firstOne - 1]]
-    nTok <- nTok + length( sentence )
-
-    bigramVec <- paste( c( "START", sentence ), c( sentence, "END" ), sep = ":" )
-    bigramVecList[[iSentence]] <- bigramVec
-
-  }
-
-  if( verbose ) message( "Unlisting ... " )
-  bigBigramVec <- unlist( bigramVecList )
-
-  if( verbose ) message( "Tabulating ... " )
-  bigramTable <- table( bigBigramVec )
-
-bigramTable
-}
-
-TrigramTable <- function( sentenceList,
-                         firstOne = 1,
-                         howMany = length( sentenceList ) - firstOne + 1,
-                         verbose = TRUE ){
-
-  typicalVec <- paste0( rep( '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ', 10 ), sep = " " )
-  trigramVecList <- list( rep( typicalVec, howMany ))
-  nTok <- 0
-
-  # Loop over sentences
-  for ( iSentence in 1:howMany ){
-
-    if( ( verbose && ( iSentence %% floor( howMany / 100 ) ) == 0 )){
-      message( "Sentences: ", iSentence, "/", howMany, " Tokens: ", nTok )
-    }
-
-    sentence <- sentenceList[[iSentence + firstOne - 1]]
-    nSent <- length( sentence )
-    nTok <- nTok + nSent
-
-    trigramVec <- paste( c( "START", sentence[1:nSent-1] ),
-                         sentence,
-                         c( sentence[2:nSent], "END" ), sep = ":" )
-    trigramVecList[[iSentence]] <- trigramVec
-
-  }
-
-  if( verbose ) message( "Unlisting ... " )
-  bigTrigramVec <- unlist( trigramVecList )
-
-  if( verbose ) message( "Tabulating ... " )
-  trigramTable <- table( bigTrigramVec )
-
-  trigramTable
-}
-
-
-
-FourgramTable <- function( sentenceList,
-                           firstOne = 1,
-                           howMany = length( sentenceList ) - firstOne + 1,
-                           verbose = TRUE ){
-
-  fourgramVecList <- list()
-  nTok <- 0
-
-  # Loop over sentences
-  for ( iSentence in 1:howMany ){
-
-    if( ( verbose && ( iSentence %% floor( howMany / 100 ) ) == 0 )){
-      message( "Sentences: ", iSentence, "/", howMany, " Tokens: ", nTok )
-    }
-
-    sentence <- c( "START", sentenceList[[iSentence + firstOne - 1]], "END" )
-    nSent <- length( sentence )
-    nTok <- nTok + nSent
-    if( nSent < 4 ) next
-
-    fourgramVec <- paste( sentence[1:(nSent-3)],
-                          sentence[2:(nSent-2)],
-                          sentence[3:(nSent-1)],
-                          sentence[4:nSent],
-                          sep = ":" )
-    fourgramVecList[[iSentence]] <- fourgramVec
-
-  }
-
-  if( verbose ) message( "Unlisting ... " )
-  bigfourgramVec <- unlist( fourgramVecList )
-
-  if( verbose ) message( "Tabulating ... " )
-  fourgramTable <- table( bigfourgramVec )
-
-  fourgramTable
 }
 
 
@@ -237,3 +73,27 @@ NgramFrame <- function( sentenceList,
 
 ngramFrame
 }
+
+
+
+RearrangeNgramFrame <- function( ngramFrame, verbose = TRUE ){
+  if( verbose ) message ( "Rearranging ... " )
+  leftColumns <- list()
+  nLeft <- dim( ngramFrame )[2] - 2
+  for( iCol in 1:nLeft ){
+    leftColumns[[iCol]] <- ngramFrame[,iCol]
+  }
+  previous <- do.call( paste, leftColumns )
+  previous <- gsub( " ", ":", previous, fixed = TRUE )
+  newFrame <- data.frame(
+    previous = factor( previous ),
+    nextTok = factor( ngramFrame[,nLeft+1]),
+    freq = ngramFrame$freq
+  )
+  if( verbose ) message ( "Sorting ... ")
+  newFrame <- newFrame[order( newFrame$previous ),]
+newFrame
+}
+
+
+

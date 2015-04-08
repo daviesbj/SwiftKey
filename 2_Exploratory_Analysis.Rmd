@@ -55,16 +55,35 @@ __TODO__: Investigate whether __table()__ does it faster/better. i.e. just enume
 a great big list of ngrams and then count 'em.
 
 ```{r get_ngram_lists, eval = FALSE }
-wordListHapax <- unlist( sampleListHapax )
-uniGramList <- table( wordListHapax )
-save( uniGramList, file = "uniGramList.Rdata" )
-biGramList <- TabulateBigrams( sampleListHapax )
-save( biGramList, file = "biGramList.Rdata")
-triGramList <- TabulateTrigrams( sampleListHapax )
-save( triGramList, file = "triGramList.Rdata")
+wordListClean <- unlist( sampleListClean )
+unigramList <- table( wordListClean )
+unigramList <- unigramList[ order( unigramList, decreasing = TRUE)]
+ngrams <- names( unigramList )
+freqs <- unname( unigramList )
+rm( unigramList )
+unigramFrame <- data.frame( token1 = factor( ngrams ), freq = freqs )
+save( unigramFrame, file = 'unigramFrame.Rdata' )
+bigramFrame <- NgramFrame( sampleListHapax, n=2 )
+save( bigramFrame, file="bigramFrame.Rdata")
+trigramFrame <- NgramFrame( sampleListHapax, n=3 )
+save( trigramFrame, file="trigramFrame.Rdata")
+fourgramFrame <- NgramFrame( sampleListHapax, n=4 )
+save( fourgramFrame, file="fourgramFrame.Rdata")
+fivegramFrame <- NgramFrame( sampleListHapax, n=5 )
+save( fivegramFrame, file="fivegramFrame.Rdata")
+trigramPrev <- RearrangeNgramFrame( trigramFrame )
+fourgramPrev <- RearrangeNgramFrame( fourgramFrame )
+fivegramPrev <- RearrangeNgramFrame( fivegramFrame )
+bigramPrev <- bigramFrame
+colnames( bigramPrev ) <- colnames( trigramPrev )
+unigramPrev <- unigramFrame
+colnames( unigramPrev ) <- c( 'nextTok', 'freq' )
+save( unigramPrev, file = "unigramPrev.Rdata" )
+save( bigramPrev, file = "bigramPrev.Rdata" )
+save( trigramPrev, file = "trigramPrev.Rdata" )
+save( fourgramPrev, file = "fourgramPrev.Rdata" )
+save( fivegramPrev, file = "fivegramPrev.Rdata" )
 ```
-
-That actually took __HOURS__, so instead I'm going to just reload the saved datasets.
 
 ```{r reload_ngram_lists, cache = TRUE}
 load( "uniGramList.Rdata" )
