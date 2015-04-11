@@ -51,4 +51,8 @@ shinyServer(function(input, output, session ) {
 
   } )
 
+  observeEvent( input$resetButton, {
+    updateTextInput( session, "userSentence", value = "" )
+  } )
+
 })
