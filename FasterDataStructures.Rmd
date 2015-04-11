@@ -1,0 +1,48 @@
+---
+title: "Faster Data Structure for nGrams"
+author: "Brian Davies"
+date: "11 April 2015"
+output: html_document
+---
+
+```{r basic_setup, eval = FALSE}
+source( "2_ExploratoryAnalysis.R" )
+```
+
+# Basic Idea
+
+Want to map from Ngram -> shortish array
+Store all shortish arrays as one long array
+Keep aux structure with mapping Ngram -> position
+Or Ngram -> start and Ngram -> end
+Seems that a search on one linear array is quite fast
+
+# Load some data
+
+I'm going to try it with all bigrams that occur more than once. 
+
+```{r load_ngram_datasets, eval = FALSE}
+load( "bigramPrev.Rdata" )
+load( "trigramPrev.Rdata" )
+load( "fourgramPrev.Rdata" )
+load( "fivegramPrev.Rdata" )
+allgramPrev <- rbind( bigramPrev, trigramPrev, fourgramPrev, fivegramPrev )
+justWords <- ! grepl( "^[ABCDEFGHIJKLMNOPQRSTUVWXYZ]",
+                      as.character( allgramPrev$nextTok), perl = TRUE )
+allgramPrev <- allgramPrev[ justWords, ]
+ngramOrder <- order( as.character( allgramPrev$previous ), -allgramPrev$freq )
+allgramPrev <- allgramPrev[ ngramOrder, ]
+prevTable <- table( as.character( allgramPrev$previous ))
+prevTable <- prevTable[ order( prevTable, decreasing = TRUE)]
+ngrams <- names( prevTable )
+freqs <- unname( prevTable )
+whichOnes <- ( freqs > 1 )
+ngrams <- ngrams[whichOnes]
+whichRows <- as.character( allgramPrev$previous ) %in% ngrams
+allgramPrev <- allgramPrev[ whichRows, ]
+allgramBreaks <- Breaks( as.character( allgramPrev$previous ))
+uniqueNgrams <- as.character( allgramPrev$previous[ allgramBreaks ])
+nextTok <- allgramPrev$previous
+freq <- allgramPrev$freq
+```
+
