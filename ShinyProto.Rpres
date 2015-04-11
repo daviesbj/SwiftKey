@@ -1,0 +1,34 @@
+Guess-o-Matic™
+==============
+
+The lightweight word predictor for __shinyapp.io__ Developers
+
+__author:__ Brian Davies
+__date:__ April 2015
+
+## Market Opportunity
+
+Today's website user doesn't want to type forever before she gets
+the results she wants. Guess-o-Matic™ takes the hard work out by filling in
+the most likely next word as soon as it's needed. Build Guess-o-Matic™ into your own
+website and get more happy customers, faster, cheaper, __TODAY.__
+
+How it Works
+============
+
+1. Guess-o-Matic™ watches as the user types text into your own form or website.
+2.  When the user reaches the end of a word, Guess-o-Matic™ looks at the sentence the
+user has typed so far
+ + Splits it up into __tokens__ -- words, names, places, other stuff
+3. Uses a statistical model of English text to estimate the most probable next word
+based on what you just typed.
+ + Guess-o-matic™-Español, Guess-o-Matic™-हिंदी, Guess-o-Matic™-普通话 and Guess-o-Matic™-русский coming soon!
+
+Under The Hood
+==============
+
+Features/Benefits of Guess-o-Matic™
+===================================
+
+Try Guess-o-Matic™ for yourself!
+================================

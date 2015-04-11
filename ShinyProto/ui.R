@@ -1,22 +1,27 @@
 shinyUI(fluidPage(
 
+  h1( "Guess-o-Matic™ Demonstration Page"),
+
   h4( "Instructions" ),
 
-  helpText( "Type a sentence. Every time you type one or more spaces, the",
-            "app will suggest the next word." ),
+  helpText( "You might have to wait a few moments for data files to get loaded.",
+            "Once you see the message \"WAITING FOR A SPACE ...\", it's ready." ),
+
+  helpText( "Start typing a sentence.",
+            "Every time you type one or more spaces, the app will suggest the next word." ),
+
+  helpText( "If you like it, hit the ACCEPT button. Otherwise, just keep typing."),
 
   hr(),
 
-  textInput("userSentence", label = h4("Sentence input"), value = ""),
+  textInput("userSentence", label = h4("Type your input sentence here"), value = ""),
   tags$head( tags$style(type="text/css", "#userSentence {width: 600px}" )),
-
-  hr(),
 
   h4( "Suggested next word" ),
 
   fluidRow(column(3, verbatimTextOutput( "nextWord" ))),
 
-  actionButton( "acceptSuggestion", "Accept" )
+  actionButton( "acceptButton", "ACCEPT" )
 
 
 ))
