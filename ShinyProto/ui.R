@@ -17,7 +17,7 @@ shinyUI(fluidPage(
 
 
   textInput("userSentence", label = h4("Type your input sentence here"), value = "" ),
-  tags$head( tags$style(type="text/css", "#userSentence {width: 600px}" )),
+  tags$head( tags$style(type="text/css", "#userSentence {width: 750px}" )),
 
   h4( "Suggested next word" ),
 
