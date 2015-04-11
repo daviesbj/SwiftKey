@@ -14,7 +14,7 @@ shinyServer(function(input, output) {
         ( substr( userSentence, nchar( userSentence ), nchar( userSentence )) != " " ) ||
         ( grepl( "^ *$", userSentence ))
       ){
-      nextWord <- "WAITING ..."
+      nextWord <- "WAITING FOR A SPACE ..."
     }else{
       nextWord <- PredictFromLastFew( StringToTokens( userSentence ))
     }

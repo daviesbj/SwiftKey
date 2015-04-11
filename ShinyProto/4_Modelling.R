@@ -1,11 +1,5 @@
-source( "~/SwiftKey/1_LoadingAndCleaning.R" )
-if( ! exists( "knownWords" )) load( "knownWords.Rdata" )
-
-PredictFromBigram <- function( inputBigram ){
-  matches <- subset( trigramPrev, previous == inputBigram )
-  matches <- matches[order(matches$freq, decreasing = TRUE ),]
-as.character(matches$nextTok[1])
-}
+source( "1_LoadingAndCleaning.R" )
+load( "knownWords.Rdata" )
 
 PredictFromLastFew <- function( tokenArray, verbose = TRUE ){
   nTokens <- length( tokenArray )
@@ -28,38 +22,6 @@ nextTok
 
 
 
-UniqueNgramFrame <- function( ngramPrevFrame, verbose = TRUE ){
-  if( verbose ) message( "Filtering ... " )
-  ngramPrevWords <- subset( ngramPrevFrame, (
-    ! grepl( "^[ABCDEFGHIJKLMNOPQRSTUVWXYZ]", nextTok, perl = TRUE ))
-  )
-  if( verbose ) message( "Sorting ... " )
-  ngramPrevWordsOrder <- order(
-    as.character(ngramPrevWords$previous),
-    -ngramPrevWords$freq
-  )
-  ngramPrevWords <- ngramPrevWords[ngramPrevWordsOrder,]
-
-  if( verbose ) message( "Analyzing ... ")
-  breaks <- Breaks( ngramPrevWords$previous )
-
-  if( verbose ) message( "Subsetting ... ")
-  biggestNgram <- ngramPrevWords[breaks,]
-  biggestNgram <- biggestNgram[order(biggestNgram$freq, decreasing=TRUE),]
-  biggestNgram$previous <- as.character( biggestNgram$previous )
-  biggestNgram <- subset( biggestNgram, freq > 1 )
-  biggestNgram$freq <- NULL
-
-biggestNgram
-}
-
-Breaks <- function( charVec ){
-  nTok <- length( charVec )
-  offset1 <- charVec[-1]
-  offset2 <- charVec[-nTok]
-  breaks <- c(1, 1+which(offset1 != offset2))
-  breaks
-}
 
 
 StringToTokens <- function( charString, verbose = FALSE, addStart = TRUE ){

@@ -2,7 +2,7 @@ specialRegex <-       c( "\\B's\\b", "\\bi'm\\b", "\\bi'd\\b", "\\Bn't\\b" )
 specialPlaceholder <- c( "SS",       "IM",        "ID",       "NT" )
 specialFinal <-       c("'s",       "i'm",        "i'd",      "n't" )
 nSpecial <- length( specialRegex )
-profanities <- readLines( '~/SwiftKey/profanity.txt' )
+profanities <- readLines( 'profanity.txt' )
 profanities <- unique( profanities[ order( profanities )])
 profanityPatterns <- paste0( profanities, collapse = '|' )
 
