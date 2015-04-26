@@ -4,12 +4,17 @@ shinyUI(fluidPage(
 
   h4( "Instructions" ),
 
-  helpText( "The app takes a few seconds to initialize.",
-            "Once you see the message \"WAITING FOR A SPACE ...\", it's ready." ),
-  helpText( "Start typing a sentence.",
-            "Every time you type a space, the app will suggest the next word." ),
-  helpText( "If you like it, hit ACCEPT. Otherwise, just keep typing.",
-            "Hit RESET or type a period (full stop) to clear the input." ),
+  helpText( "(1) The app takes several seconds to start up.",
+            "When you see the message \"WAITING FOR A SPACE ...\", it's ready." ),
+  helpText( "(2) Start typing a sentence.",
+            "Click RESET or type a period (full stop) to clear the input."
+             ),
+  helpText( "(3) When you type a space, the app will suggest the next word.",
+            "If you like it, click ACCEPT, or just keep typing."
+             ),
+  helpText( "(4) Nothing will happen if you just type spaces -- you have to type",
+            "at least one word."
+             ),
 
   hr(),
 

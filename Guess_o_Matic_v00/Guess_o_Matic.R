@@ -1,3 +1,30 @@
+library( dplyr )
+library( curl )
+
+dataFile <- "GMdata.zip"
+if( ! file.exists( dataFile )){
+  theURL <- paste( 'https://s3.amazonaws.com/daviesbjCoursera/Guess_o_Matic_v00/', dataFile, sep = '' )
+  download.file( theURL, destfile = dataFile, method = "curl" )
+  unzip( dataFile )
+}
+
+for( rDfile in list.files( ".", "*.Rdata" )) attach( rDfile )
+
+profanities <- readLines( 'profanity.txt' )
+profanities <- unique( profanities[ order( profanities )])
+profanityPatterns <- paste0( profanities, collapse = '|' )
+rm( profanities )
+
+malenames <- readLines( 'boys.txt' )
+maleposs <- c( paste0( malenames, "'s"), paste0( malenames, "s") )
+femalenames <- readLines( 'girls.txt' )
+femaleposs <- c( paste0( femalenames, "'s"), paste0( femalenames, "s") )
+lastnames <- readLines( 'lastnames.txt' )
+countries <- readLines( 'countries.txt' )
+states <- readLines( 'us_states.txt' )
+uscities <- readLines( 'us_cities.txt' )
+worldcities <- readLines( 'world_cities.txt' )
+
 SentenceFinder <- function( inputArray ){
   gsub( "\\s\\s*", " ",
         unlist(
@@ -178,3 +205,4 @@ PredictNext <- function( tokens,
 topWordFrame$nextWord
 }
 
+NormalizeWeights <- function(x) x / sum(x)

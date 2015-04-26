@@ -1,52 +1,27 @@
-# library( curl )
-# source( "4_Modelling.R" )
-#
-# ##
-# # Load datafiles
-# ##
-#
-# for( dataFile in remoteDataFiles ){
-#   if( file.exists( dataFile )) next
-#   theURL <- paste( 'https://s3.amazonaws.com/daviesbjCoursera/ShinyProto/', dataFile, sep = '' )
-#   download.file( theURL, destfile = dataFile, method = "curl" )
-# }
-
-
-source( "ServerFunctions.R" )
-library( dplyr )
-
-for( rDfile in list.files( ".", "*.Rdata" )) attach( rDfile )
-
-profanities <- readLines( 'profanity.txt' )
-profanities <- unique( profanities[ order( profanities )])
-profanityPatterns <- paste0( profanities, collapse = '|' )
-rm( profanities )
-
-malenames <- readLines( 'boys.txt' )
-maleposs <- c( paste0( malenames, "'s"), paste0( malenames, "s") )
-femalenames <- readLines( 'girls.txt' )
-femaleposs <- c( paste0( femalenames, "'s"), paste0( femalenames, "s") )
-lastnames <- readLines( 'lastnames.txt' )
-countries <- readLines( 'countries.txt' )
-states <- readLines( 'us_states.txt' )
-uscities <- readLines( 'us_cities.txt' )
-worldcities <- readLines( 'world_cities.txt' )
-
 ##
 # Predictor tuning
 ##
+lnWeights <- c( 9.171, 6.316, 12.497, 6.416 )
 
-shinyServer(function(input, output, session ) {
+source( "Guess_o_Matic.R" )
+
+weights <- NormalizeWeights( c( 1, exp( lnWeights )))
+placeHolder <- "WAITING FOR A SPACE ..."
+
+shinyServer( function( input, output, session ) {
 
   output$nextWord <- renderText({
     userSentence <- input$userSentence
     if(
-        ( substr( userSentence, nchar( userSentence ), nchar( userSentence )) != " " ) ||
-        ( grepl( "^ *$", userSentence ))
+        ( substr( userSentence, nchar( userSentence ), nchar( userSentence )) == " " ) &&
+        ( ! grepl( "^ *$", userSentence ))
       ){
-      nextWord <- "WAITING FOR A SPACE ..."
-    }else{
-      nextWord <- PredictNext( OnlineTokener( userSentence ))
+      nextWord <- PredictNext( OnlineTokener( userSentence ), weights = weights )
+    } else if( substr( userSentence, nchar( userSentence ), nchar( userSentence )) %in% c( "?", "!", "." ) ){
+      updateTextInput( session, "userSentence", value = "" )
+      nextWord <- placeHolder
+    } else {
+      nextWord <- placeHolder
     }
   nextWord
   })
@@ -57,7 +32,7 @@ shinyServer(function(input, output, session ) {
       ( substr( userSentence, nchar( userSentence ), nchar( userSentence )) == " " ) &&
       ( ! grepl( "^ *$", userSentence ))
     ){
-      nextWord <- PredictNext( OnlineTokener( userSentence ))
+      nextWord <- PredictNext( OnlineTokener( userSentence ), weights = weights )
       newSentence <- paste0( c( input$userSentence, nextWord, " "), collapse = "" )
       updateTextInput( session, "userSentence", value = newSentence )
     }
