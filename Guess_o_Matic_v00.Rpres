@@ -1,0 +1,69 @@
+Guess-o-Matic™
+==============
+
+The lightweight word predictor for __shinyapps.io__ Developers
+
+__author:__ Brian Davies
+__date:__ April 2015
+
+## Market Opportunity
+
+Today's ShinyApps website user doesn't want to type forever to get
+results. Guess-o-Matic fills in
+the most likely next word as soon as it's needed. Build it into your own
+ShinyApps website and get more happy visitors __TODAY.__
+
+__TRY IT NOW:__ <a href="https://daviesbj.shinyapps.io/ShinyProto/" target="_blank">Guess-o-Matic at shinyapps.io</a> (in a new window)
+
+How it Works
+============
+![screenshot](ShinyProto.png)
+When you reach the end of a word, Guess-o-Matic looks at what you typed so
+far and splits it up into __tokens__ -- words, names, other stuff.
+Then it uses a statistical model of English to estimate the most probable next word
+based on what you just typed.
+
+Training and Optimizing Guess-o-Matic
+======================================
+
+* Guess-o-Matic uses [Weighted Linear Interpolation](http://en.wikipedia.org/wiki/N-gram#Smoothing_techniques)
+ + Estimates next-word probabilities by analyzing a corpus of text from news sites, blogs and Twitter
+ + Uses as much previous text as possible (up to five words), but uses less when it can't get a longer match.
+ + Blends the estimates made using the _previous_ single word, 2 words ... up five words (unigrams to 5-grams)
+* Blending weights for the different estimates are optimized by running Guess-o-Matic
+under the control of the [Nelder-Mead optimization algorithm](http://en.wikipedia.org/wiki/Nelder–Mead_method)
+ + Nelder-Mead adjusts Linear Interpolation weights to improve how Guess-o-Matic
+performs on _new_ text.
+ + Optimized weights are used in production Guess-o-Matic.
+
+Exhaustive Tokenization front-end
+=================================
+
+* Avoid the risk of suggesting a profanity by filtering them out of the training
+set before any training gets done
+ + Rude words are replaced with the token PROFANITY so Guess-o-Matic can still make a
+ sensible estimate of the next word even in the worst case
+* Detect rare and misspelled words in the training set and automatically flag them as special
+ + Allows Guess-o-Matic to do something sensible when the user makes a spelling mistake or
+ uses rare or foreign words
+* Detect other special words
+ + Male and female names, possessives, cities, countries ...
+ + Makes the language model more robust because it treats similar things in the same way
+* Use same tokenizer in training and deployment
+
+Using it in your own Shiny Apps
+================================
+
+If you've installed the code and datafiles, you only need to add these two
+lines to your Shiny App to start using Guess-o-Matic
+
+```{r demo_code, eval = FALSE}
+source( "Guess_o_Matic.R" )
+# Note use of both main modules
+# (tokenization and prediction)
+# in the same R statement
+nextWord <- PredictNext( OnlineTokener( userSentence ))
+```
+
+Use standard Shiny App methods to do things like putting the selected word onto
+the end of the user's input.
